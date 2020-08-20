@@ -63,6 +63,7 @@ var (
 	disableKeepAlives  = flag.Bool("disable-keepalive", false, "")
 	disableRedirects   = flag.Bool("disable-redirects", false, "")
 	proxyAddr          = flag.String("x", "", "")
+	maxResult          = flag.Int("max-result", 1000000, "")
 )
 
 var usage = `Usage: hey [options...] <url>
@@ -99,6 +100,9 @@ Options:
   -disable-redirects    Disable following of HTTP redirects
   -cpus                 Number of used cpu cores.
                         (default for current machine is %d cores)
+
+  -max-result           Number of max results. 
+                        (default value is minimum of (concurrent * 1000) or 1000000)
 `
 
 func main() {
@@ -119,6 +123,7 @@ func main() {
 	conc := *c
 	q := *q
 	dur := *z
+	maxRes := *maxResult
 
 	if dur > 0 {
 		num = math.MaxInt32
@@ -225,6 +230,7 @@ func main() {
 		H2:                 *h2,
 		ProxyAddr:          proxyURL,
 		Output:             *output,
+		MaxResult:          maxRes,
 	}
 	w.Init()
 
