@@ -27,9 +27,6 @@ const (
 	barChar = "■"
 )
 
-// We report for max 1M results.
-const maxRes = 1000000
-
 type report struct {
 	avgTotal float64
 	fastest  float64
@@ -63,7 +60,7 @@ type report struct {
 	w io.Writer
 }
 
-func newReport(w io.Writer, results chan *result, output string, n int) *report {
+func newReport(w io.Writer, results chan *result, output string, n int, maxRes int) *report {
 	cap := min(n, maxRes)
 	return &report{
 		output:      output,
@@ -81,7 +78,7 @@ func newReport(w io.Writer, results chan *result, output string, n int) *report 
 	}
 }
 
-func runReporter(r *report) {
+func runReporter(r *report, maxRes int) {
 	// Loop will continue until channel is closed
 	for res := range r.results {
 		r.numRes++

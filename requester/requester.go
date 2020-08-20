@@ -31,7 +31,6 @@ import (
 )
 
 // Max size of the buffer of result channel.
-const maxResult = 1000000
 const maxIdleConn = 500
 
 type result struct {
@@ -97,7 +96,8 @@ type Work struct {
 	stopCh   chan struct{}
 	start    time.Duration
 
-	report *report
+	report    *report
+	MaxResult int
 }
 
 func (b *Work) writer() io.Writer {
@@ -110,7 +110,11 @@ func (b *Work) writer() io.Writer {
 // Init initializes internal data-structures
 func (b *Work) Init() {
 	b.initOnce.Do(func() {
-		b.results = make(chan *result, min(b.C*1000, maxResult))
+		if b.MaxResult != 1000000 {
+			b.results = make(chan *result, b.MaxResult)
+		} else {
+			b.results = make(chan *result, min(b.C*1000, b.MaxResult))
+		}
 		b.stopCh = make(chan struct{}, b.C)
 	})
 }
@@ -120,10 +124,10 @@ func (b *Work) Init() {
 func (b *Work) Run() {
 	b.Init()
 	b.start = now()
-	b.report = newReport(b.writer(), b.results, b.Output, b.N)
+	b.report = newReport(b.writer(), b.results, b.Output, b.N, b.MaxResult)
 	// Run the reporter first, it polls the result channel until it is closed.
 	go func() {
-		runReporter(b.report)
+		runReporter(b.report, b.MaxResult)
 	}()
 	b.runWorkers()
 	b.Finish()
